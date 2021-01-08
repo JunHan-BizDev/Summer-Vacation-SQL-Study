@@ -1,0 +1,95 @@
+//SQL queries 
+
+//2016년 1분기에 고객(customer)별 주문(order) 횟수, 주문한 상품(product)의 카테고리(category) 수, 
+//총 주문 금액(quantity * unit_price)과 고객의 이름(last_name, first_name)을 찾는 쿼리
+
+select o.customer_id, 
+    c.last_name, 
+    c.first_name, 
+    count(distinct o.id) order_cnt, 
+    count(distinct p.category) category_cnt, 
+    sum(od.quantity * od.unit_price) sum_of_order_price
+from orders as o
+    left join customers c on o.customer_id = c.id
+    left join order_details od on o.id = od.order_id
+    left join products p on od.product_id = p.id
+where '2006-01-01' <= o.order_date
+    and o.order_date < '2006-04-01'
+group by o.customer_id;
+
+
+//2016년 1분기 동안 세 번 이상 주문(order) 된 상품(product)과 그 상품의 주문 수를 찾는 쿼리
+
+select *
+from (
+    select product_id, count(distinct o.id) cnt
+    from orders o
+        left join order_details od on o.id = od.order_id
+    where '2006-01-01' <= order_date 
+        and order_date < '2006-04-01'
+    group by product_id
+    ) a
+where cnt >= 3
+
+//2016년 1분기, 2분기 연속으로 하나 이상의 주문(order)을 받은 직원(employee)을 찾는 쿼리
+
+select o1.employee_id
+from 
+    (select distinct employee_id
+    from orders
+    where '2006-01-01' <= order_date 
+        and order_date < '2006-04-01') o1
+        
+    inner join
+    
+    (select distinct employee_id
+    from orders
+    where '2006-04-01' <= order_date 
+        and order_date < '2006-07-01') o2
+        
+    on o1.employee_id = o2.employee_id;
+    
+//2016년 1분기, 2분기 연속으로 하나 이상의 주문을 받은 직원별로, 2016년 2분기 동안 받은 주문 수를 찾는 쿼리
+ 
+select employee_id, count(1) cnt
+from orders
+where employee_id in (
+    select o1.employee_id
+        from 
+            (select distinct employee_id
+            from orders
+            where '2006-01-01' <= order_date 
+                and order_date < '2006-04-01') o1
+            inner join
+            (select distinct employee_id
+            from orders
+            where '2006-04-01' <= order_date 
+                and order_date < '2006-07-01') o2
+            on o1.employee_id = o2.employee_id
+        )
+    and '2006-04-01' <= order_date 
+    and order_date < '2006-07-01'
+group by employee_id;
+
+//2016년 1분기, 2분기 연속으로 하나 이상의 주문을 받은 직원별로, 월별 주문 수를 찾는 쿼리
+
+select employee_id, date_format(order_date, '%Y-%m') ym, count(1) cnt
+from orders
+where employee_id in (
+    select o1.employee_id
+        from 
+            (select distinct employee_id
+            from orders
+            where '2006-01-01' <= order_date 
+                and order_date < '2006-04-01') o1
+            inner join
+            (select distinct employee_id
+            from orders
+            where '2006-04-01' <= order_date 
+                and order_date < '2006-07-01') o2
+            on o1.employee_id = o2.employee_id
+        )
+    and '2006-01-01' <= order_date 
+    and order_date < '2007-01-01'
+group by 1, 2;
+
