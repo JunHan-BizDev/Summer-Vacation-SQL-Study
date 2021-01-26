@@ -1,0 +1,22 @@
+--Find how many lecture courses each student takes. 
+
+SELECT StudentName, Students.studentID, Cnt
+FROM (
+      SELECT students.StudentID, count(studentCourses.StudentID) AS Cnt
+      FROM students LEFT JOIN studentCourses
+      ON students.StudentID = studentCourses.StudentID
+      GROUP BY students.StudentID
+      )T INNER JOIN students ON T.StudentID = students.StudentID;
+      
+/* Why used sub-query? */
+-- 1. we have to use left join to count students who don't take any class 
+-- 2. To prevent the duplication of studentName, using inner join is required. 
+
+/* Querying without using sub-query */
+SELECT StudentName, StudentID, count(SutdentID) AS Cnt
+FROM students
+LEFT JOIN sutdents.StudentID = studentCourses.StudentID
+GROUP BY StudentID, StudentName; 
+
+--Grouping by two columns :: 1. studentID, 2. studentName
+
