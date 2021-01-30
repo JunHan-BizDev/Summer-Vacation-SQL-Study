@@ -1,0 +1,48 @@
+SELECT
+    -- Select country name and the count match IDs
+    name AS country_name,
+    COUNT(sub.id) AS matches
+FROM country AS c
+-- Inner join the subquery onto country
+-- Select the country id and match id columns
+INNER JOIN (SELECT country_id, id 
+           FROM match
+           -- Filter the subquery by matches with 10+ goals
+           WHERE (home_goal + away_goal) >= 10) AS sub
+ON c.id = sub.country_id
+GROUP BY country_name;
+
+
+—select 안에 subquery를 넣었을때, main에 필터링이 적용되어있으면 subquery도 같이 적용해줘야함
+SELECT 
+    l.name AS league,
+    -- Select and round the league's total goals
+    ROUND(AVG(m.home_goal + m.away_goal), 2) AS avg_goals,
+    -- Select & round the average total goals for the season
+    (SELECT ROUND(AVG(home_goal + away_goal), 2) 
+     FROM match
+     WHERE season = '2013/2014') AS overall_avg
+FROM league AS l
+LEFT JOIN match AS m
+ON l.country_id = m.country_id
+-- Filter for the 2013/2014 season
+WHERE season = '2013/2014'
+GROUP BY league;
+
+
+SELECT 
+    -- Select the stage and average goals from the subquery
+    s.stage,
+    ROUND(avg_goals,2) AS avg_goals
+FROM 
+    -- Select the stage and average goals in 2012/2013
+    (SELECT
+         stage,
+         AVG(home_goal + away_goal) AS avg_goals
+     FROM match
+     WHERE season = '2012/2013'
+     GROUP BY stage) AS s
+WHERE 
+    -- Filter the main query using the subquery
+    s.avg_goals > (SELECT AVG(home_goal + away_goal) 
+                    FROM match WHERE season = '2012/2013');
