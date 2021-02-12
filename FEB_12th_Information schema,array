@@ -1,0 +1,46 @@
+ -- Select all columns from the COLUMNS system database
+ SELECT * 
+ FROM INFORMATION_SCHEMA.COLUMNS 
+ WHERE table_name = 'actor';
+
+—using interval
+SELECT
+    -- Select the rental and return dates
+    rental_date,
+    return_date,
+    -- Calculate the expected_return_date
+    rental_date + INTERVAL '3 days' AS expected_return_date
+FROM rental;
+
+—Array 
+
+
+— select all films that have Deleted Scenes in the second index of the special_features ARRAY.
+
+
+-- Select the title and special features column 
+SELECT 
+  title, 
+  special_features 
+FROM film
+-- Use the array index of the special_features column
+WHERE special_features[2] = 'Deleted Scenes';
+
+
+
+— Match 'Trailers' in any index of the special_features ARRAY regardless of position.
+
+SELECT
+  title, 
+  special_features 
+FROM film 
+WHERE 'Trailers' = ANY(special_features);
+
+— or
+
+SELECT 
+  title, 
+  special_features 
+FROM film 
+-- Filter where special_features contains 'Deleted Scenes'
+WHERE special_features @> ARRAY['Trailers'];
