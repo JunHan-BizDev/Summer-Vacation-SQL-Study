@@ -1,0 +1,92 @@
+    -- Calculate the number of days rented using AGE 
+
+SELECT f.title, f.rental_duration,
+    AGE(r.return_date, r.rental_date) AS days_rented
+FROM film AS f
+    INNER JOIN inventory AS i ON f.film_id = i.film_id
+    INNER JOIN rental AS r ON i.inventory_id = r.inventory_id
+ORDER BY f.title;
+
+
+—exclude films that have a NULL value for the return_date and also convert the rental_duration to an INTERVAL type.
+
+SELECT
+    f.title,
+    -- Convert the rental_duration to an interval
+    INTERVAL '1' day * f.rental_duration,
+    -- Calculate the days rented as we did previously
+    r.return_date - r.rental_date AS days_rented
+FROM film AS f
+    INNER JOIN inventory AS i ON f.film_id = i.film_id
+    INNER JOIN rental AS r ON i.inventory_id = r.inventory_id
+-- Filter the query to exclude outstanding rentals
+WHERE r.return_date IS NOT NULL
+ORDER BY f.title;
+
+
+— for manipulating timestamp data, take multiplying interval variables to calculate. ex) INTERVAL ‘1’ day * ~
+
+SELECT
+    f.title,
+    r.rental_date,
+    f.rental_duration,
+    -- Add the rental duration to the rental date
+    INTERVAL '1' day * f.rental_duration + rental_date AS expected_return_date,
+    r.return_date
+FROM film AS f
+    INNER JOIN inventory AS i ON f.film_id = i.film_id
+    INNER JOIN rental AS r ON i.inventory_id = r.inventory_id
+ORDER BY f.title;
+
+— NOW(), CURRENT_TIMESTAMP, CURRENT_TIME 
+
+SELECT 
+    -- Select the current date
+    CURRENT_DATE,
+    -- CAST the result of the NOW() function to a date
+    CAST( NOW() AS date )
+
+— calculating current_timestamp with interval casting 
+
+SELECT
+    CURRENT_TIMESTAMP::timestamp AS right_now,
+    INTERVAL '5 days' + CURRENT_TIMESTAMP AS five_days_from_now;
+
+
+—produce a predictive model that will help forecast DVD rental activity by day of the week. 
+
+-- Extract day of week from rental_date
+SELECT 
+  EXTRACT(dow FROM rental_date) AS dayofweek, 
+  -- Count the number of rentals
+  count(*) as rentals 
+FROM rental 
+GROUP BY 1;
+
+—extract a list of customers and their rental history over 90 days.
+
+SELECT 
+  c.first_name || ' ' || c.last_name AS customer_name,
+  f.title,
+  r.rental_date,
+  -- Extract the day of week date part from the rental_date
+  EXTRACT(dow FROM r.rental_date) AS dayofweek,
+  AGE(r.return_date, r.rental_date) AS rental_days,
+  -- Use DATE_TRUNC to get days from the AGE function
+  CASE WHEN DATE_TRUNC('day', AGE(r.return_date, r.rental_date)) > 
+  -- Calculate number of d
+    f.rental_duration * INTERVAL '1' day 
+  THEN TRUE 
+  ELSE FALSE END AS past_due 
+FROM 
+  film AS f 
+  INNER JOIN inventory AS i 
+    ON f.film_id = i.film_id 
+  INNER JOIN rental AS r 
+    ON i.inventory_id = r.inventory_id 
+  INNER JOIN customer AS c 
+    ON c.customer_id = r.customer_id 
+WHERE 
+  -- Use an INTERVAL for the upper bound of the rental_date 
+  r.rental_date BETWEEN CAST('2005-05-01' AS DATE) 
+  AND CAST('2005-05-01' AS DATE) + INTERVAL '90 day';
