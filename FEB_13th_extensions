@@ -1,0 +1,47 @@
+
+-- Enable the pg_trgm extension
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- Select all rows extensions
+SELECT * 
+FROM pg_extension;
+
+
+—measure the similarity between the title and description from the film table of the Sakila database.
+
+SELECT 
+  title, 
+  description, 
+  -- Calculate the similarity
+  similarity(title, description)
+FROM 
+  film
+
+—perform a query against the film table using a search string with a misspelling 
+
+-- Select the title and description columns
+SELECT  
+  title, 
+  description, 
+  -- Calculate the levenshtein distance
+  levenshtein(title, 'JET NEIGHBOR') AS distance
+FROM 
+  film
+ORDER BY 3
+
+
+
+—predict whether the words and phrases used to describe a film have an impact on the number of rentals.
+
+SELECT 
+  title, 
+  description, 
+  -- Calculate the similarity
+  similarity(description, 'Astounding Drama')
+FROM 
+  film 
+WHERE 
+  to_tsvector(description) @@ 
+  to_tsquery('Astounding & Drama') 
+ORDER BY 
+  similarity(title, description) DESC;
