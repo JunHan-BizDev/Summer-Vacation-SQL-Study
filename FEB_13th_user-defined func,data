@@ -1,0 +1,26 @@
+-- Create an enumerated data type, compass_position
+CREATE TYPE compass_position AS ENUM (
+    -- Use the four cardinal directions
+    'North', 
+    'South',
+    'East', 
+    'West'
+);
+-- Confirm the new data type is in the pg_type system table
+SELECT typname
+FROM pg_type
+WHERE typname='compass_position';
+
+
+—determine which film title is currently held by which customer using the inventory_held_by_customer() function.
+
+-- Select the film title, rental and inventory ids
+SELECT 
+    f.title, 
+    i.inventory_id,
+    -- Determine whether the inventory is held by a customer
+    inventory_held_by_customer(i.inventory_id) AS held_by_cust 
+FROM film as f 
+    -- Join the film table to the inventory table
+    INNER JOIN inventory AS i ON f.film_id=i.film_id 
+    inventory_held_by_customer(i.inventory_id) IS NOT NULL;
