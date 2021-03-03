@@ -1,0 +1,104 @@
+-- MS Access does not provide window functions and CTEs, So It was challenging to implement window functions such as LAG() or RANK()
+
+
+-- What are the total import and export for consumer goods during 2006 and 2007?
+SELECT Left(TimeID,4) AS [Year], Fact.[Import/Export], Sum(Fact.Amount) AS Total_Amount
+FROM Fact
+WHERE (((Left([TimeID],4)) In ("2006","2007")))
+GROUP BY Left(TimeID,4), Fact.[Import/Export];
+ 
+ 
+--How much crude oil did the U.S. import during each of the months in 2006 and 2007? 
+ 
+SELECT F.TimeID AS [Date], F.Amount, (SELECT Top 1 F2.Amount FROM Fact F2 
+WHERE F2.TimeID < F.TimeID AND F.ItemID = F2.ItemID AND F.[Import/Export] = F2.[Import/Export] ORDER BY F2.TimeID DESC) AS Prev_Amount, (F.Amount-Prev_Amount) AS Increase
+FROM Fact AS F LEFT JOIN Item AS I ON F.ItemID = I.ItemID
+WHERE (((F.[Import/Export])="Import") AND ((I.Item)="Crude oil"));
+ 
+ 
+--Which are the top 2 categories for exports in 2006? Which are the top 2 categories for imports in 2006?
+
+ 
+SELECT TOP 2 C.Category, F.[Import/Export], SUM(F.Amount) AS total
+FROM Category AS C
+LEFT JOIN (Item AS I LEFT JOIN Fact AS F ON I.ItemID = F.ItemID) ON C.CategoryID = I.CategoryID
+WHERE F.[Import/Export] = "Import" AND LEFT(F.TimeID,4) = "2006"
+GROUP BY C.Category, F.[Import/Export] 
+ORDER BY 3 DESC
+ 
+UNION SELECT TOP 2 C.Category, F.[Import/Export], SUM(F.Amount) AS total
+FROM Category AS C
+LEFT JOIN (Item AS I LEFT JOIN Fact AS F ON I.ItemID = F.ItemID) ON C.CategoryID = I.CategoryID
+WHERE F.[Import/Export] = "Export" AND LEFT(F.TimeID,4) = "2006"
+GROUP BY C.Category, F.[Import/Export]
+ORDER BY 3 DESC;
+ 
+ 
+--How much did the U.S. import and export items related to computers or semiconductors during each of the months in 2006 and 2007? 
+ 
+SELECT Time.TimeID, [Import/Export], Item, SUM(Amount) AS total
+FROM [Time] INNER JOIN (Item INNER JOIN Fact ON Item.ItemID = Fact.ItemID) ON Time.TimeID = Fact.TimeID
+WHERE Item IN("Computers","Semiconductors")
+GROUP BY Time.TimeID, [Import/Export], Item;
+ 
+ 
+--Which are the top 5 Items for imports? Which are the top 5 items for exports?
+ 
+SELECT TOP 5 I.Item, F.[Import/Export], SUM(F.Amount) AS total
+FROM Item AS I
+LEFT JOIN Fact AS F ON I.ItemID = F.ItemID 
+WHERE F.[Import/Export] = "Import" 
+GROUP BY  I.Item, F.[Import/Export] 
+ORDER BY 3 DESC
+ 
+UNION SELECT TOP 5 I.Item, F.[Import/Export], SUM(F.Amount) AS total
+FROM Item AS I
+LEFT JOIN Fact AS F ON I.ItemID = F.ItemID 
+WHERE F.[Import/Export] = "Export" 
+GROUP BY  I.Item, F.[Import/Export]
+ORDER BY 3 DESC;
+ 
+ 
+--Does the U.S. export or import more of agriculture and agriculture-related goods? 
+ 
+SELECT Fact.[Import/Export], Sum(Fact.Amount) AS [Sum]
+FROM Fact LEFT JOIN Item ON Fact.ItemID = Item.ItemID
+WHERE (((Item.Item) Like "Agri*") AND ((Left([TimeID],4))="2006"))
+GROUP BY Fact.[Import/Export];
+ 
+ 
+--What are total exports and imports for goods and services for the year 2006? (All except Services category can be classified under goods).  Does the U.S. import more services than exports? How about for goods?
+
+ 
+SELECT F.[Import/Export], Sum(F.Amount) AS Total_Goods_Amount
+FROM (Category AS C LEFT JOIN Item AS I ON C.CategoryID = I.CategoryID) LEFT JOIN Fact AS F ON I.ItemID = F.ItemID
+WHERE (((Left([F].[TimeID],4))="2006") AND ((C.Category) Not Like "Services"))
+GROUP BY F.[Import/Export];
+ 
+SELECT F.[Import/Export], Sum(F.Amount) AS Total_Service_Amount
+FROM (Category AS C LEFT JOIN Item AS I ON C.CategoryID = I.CategoryID) LEFT JOIN Fact AS F ON I.ItemID = F.ItemID
+WHERE (((Left([F].[TimeID],4))="2006") AND ((C.Category) Like "Services"))
+GROUP BY F.[Import/Export];
+ 
+ 
+--For each of the months in 2006 and 2007, compute the total imports and exports. Does U.S. have a trade surplus or deficit?
+ 
+TRANSFORM Sum(Fact.Amount) AS Amount의Sum
+SELECT Fact.TimeID, Fact.[Import/Export]
+FROM Category, [Time] INNER JOIN Fact ON Time.TimeID = Fact.TimeID
+GROUP BY Fact.TimeID
+PIVOT Fact.[Import/Export];
+ 
+ 
+--For the year 2006, find all items imported that has an amount greater than the maximum export amount for any time in 2006
+ 
+SELECT I.Item, SUM(F.Amount) AS Imports
+FROM Item AS I LEFT JOIN Fact AS F ON F.ItemID = I.ItemID
+WHERE LEFT(F.TimeID,4) = "2006" AND F.[Import/Export] = "Import"
+GROUP BY I.Item
+HAVING SUM(F.Amount) > 
+(SELECT MAX(F.Amount) 
+FROM Fact AS F  
+WHERE LEFT(F.TimeID,4) = "2006" AND F.[Import/Export] = "Export")
+ORDER BY 2;
+ 
