@@ -6,5 +6,5 @@ you can figure out 1) when I studied 2) what I learned via description of each f
 
 ### learn from 
 1. Datacamp
-2. [데이터 분석을 위한 SQL 레시피](https://book.naver.com/bookdb/book_detail.nhn?bid=13447207, "book link")
+2. [데이터 분석을 위한 SQL 레시피](https://book.naver.com/bookdb/book_detail.nhn?bid=13447207)
 
